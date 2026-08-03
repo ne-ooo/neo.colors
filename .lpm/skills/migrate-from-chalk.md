@@ -14,8 +14,8 @@ globs:
 | Aspect | chalk v5 | neo.colors |
 |--------|----------|------------|
 | Dependencies | 4 runtime (ansi-styles, supports-color, etc.) | Zero |
-| Bundle (gzipped) | ~6KB | ~4KB (33% smaller) |
-| Performance | Baseline | 5-10% faster |
+| Bundle (gzipped) | Varies by version | ~1.1KB named red / ~2.5KB default in regression bundles |
+| Performance | Baseline | Same performance class on current benchmarks |
 | Cold start | ~1.2ms | ~0.8ms |
 | Source code | ~1,500 LOC across packages | ~590 LOC single package |
 | Chaining API | Yes | Yes (identical) |
@@ -119,7 +119,7 @@ chalk.red('text')  // Full chalk loaded
 
 // neo.colors — tree-shakeable named exports
 import { red, bold } from '@lpm.dev/neo.colors'
-red('text')  // Only red and bold in bundle (~600 bytes vs ~4KB)
+red('text')  // Named red regression bundle: ~1.1KB gzip vs ~2.5KB default
 ```
 
 Named exports are plain functions (no chaining). Use them when:

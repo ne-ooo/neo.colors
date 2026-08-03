@@ -77,6 +77,17 @@ describe('Color Conversions', () => {
     it('should convert pure blue', () => {
       expect(rgbToAnsi16(0, 0, 255)).toBe(94)
     })
+
+    it('should convert secondary colors without losing tied channels', () => {
+      expect(rgbToAnsi16(255, 255, 0)).toBe(93)
+      expect(rgbToAnsi16(0, 255, 255)).toBe(96)
+      expect(rgbToAnsi16(255, 0, 255)).toBe(95)
+    })
+
+    it('should select the nearest grayscale palette entry', () => {
+      expect(rgbToAnsi16(128, 128, 128)).toBe(90)
+      expect(rgbToAnsi16(192, 192, 192)).toBe(37)
+    })
   })
 
   describe('clampRgb()', () => {
@@ -98,6 +109,11 @@ describe('Color Conversions', () => {
 
     it('should round decimal values', () => {
       expect(clampRgb(128.7, 64.3, 32.9)).toEqual([129, 64, 33])
+    })
+
+    it('should normalize non-finite values', () => {
+      expect(clampRgb(NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY)).toEqual([0, 255, 0])
+      expect(clampRgb('invalid' as never, '128' as never, null as never)).toEqual([0, 128, 0])
     })
   })
 

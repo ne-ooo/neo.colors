@@ -3,6 +3,25 @@
  * Simplified alternative to color-convert (only essential conversions)
  */
 
+const ANSI16_PALETTE = [
+  [30, 0, 0, 0],
+  [31, 128, 0, 0],
+  [32, 0, 128, 0],
+  [33, 128, 128, 0],
+  [34, 0, 0, 128],
+  [35, 128, 0, 128],
+  [36, 0, 128, 128],
+  [37, 192, 192, 192],
+  [90, 128, 128, 128],
+  [91, 255, 0, 0],
+  [92, 0, 255, 0],
+  [93, 255, 255, 0],
+  [94, 0, 0, 255],
+  [95, 255, 0, 255],
+  [96, 0, 255, 255],
+  [97, 255, 255, 255],
+] as const
+
 /**
  * Convert hex color to RGB
  */
@@ -53,44 +72,35 @@ export function rgbToAnsi256(r: number, g: number, b: number): number {
  * Convert RGB to 16-color ANSI code
  */
 export function rgbToAnsi16(r: number, g: number, b: number): number {
-  // Determine which color component is dominant
-  const max = Math.max(r, g, b)
-  const min = Math.min(r, g, b)
-  const saturation = max === 0 ? 0 : (max - min) / max
+  let closestCode: number = ANSI16_PALETTE[0][0]
+  let closestDistance = Number.POSITIVE_INFINITY
 
-  // Low saturation = grayscale
-  if (saturation < 0.2) {
-    if (max < 64) return 30 // black
-    if (max >= 192) return 97 // bright white
-    return 37 // white
+  for (const [code, pr, pg, pb] of ANSI16_PALETTE) {
+    const distance = ((r - pr) ** 2) + ((g - pg) ** 2) + ((b - pb) ** 2)
+    if (distance < closestDistance) {
+      closestCode = code
+      closestDistance = distance
+    }
   }
 
-  // Determine the dominant color
-  let ansi = 30
-  if (r === max) {
-    ansi = b > g ? 35 : 31 // magenta or red
-  } else if (g === max) {
-    ansi = r > b ? 33 : 32 // yellow or green
-  } else {
-    ansi = g > r ? 36 : 34 // cyan or blue
-  }
-
-  // Adjust for bright colors based on maximum channel value
-  if (max >= 128) {
-    ansi += 60 // Convert to bright variant (90-97)
-  }
-
-  return ansi
+  return closestCode
 }
 
 /**
  * Clamp RGB values to valid range
  */
 export function clampRgb(r: number, g: number, b: number): [number, number, number] {
+  const clampChannel = (value: number): number => {
+    const numericValue = Number(value)
+    if (Number.isNaN(numericValue) || numericValue === Number.NEGATIVE_INFINITY) return 0
+    if (numericValue === Number.POSITIVE_INFINITY) return 255
+    return Math.max(0, Math.min(255, Math.round(numericValue)))
+  }
+
   return [
-    Math.max(0, Math.min(255, Math.round(r))),
-    Math.max(0, Math.min(255, Math.round(g))),
-    Math.max(0, Math.min(255, Math.round(b))),
+    clampChannel(r),
+    clampChannel(g),
+    clampChannel(b),
   ]
 }
 

@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { styles, ansi256, rgb, aliases } from '../../src/core/ansi-codes.js'
+import { styles, ansi256, rgb, aliases, isStyleName, getStyle } from '../../src/core/ansi-codes.js'
 
 describe('ANSI Codes', () => {
   describe('Basic styles', () => {
@@ -71,6 +71,15 @@ describe('ANSI Codes', () => {
     it('should have bgGray and bgGrey as aliases for bgBlackBright', () => {
       expect(aliases.bgGray).toEqual(styles.bgBlackBright)
       expect(aliases.bgGrey).toEqual(styles.bgBlackBright)
+    })
+
+    it('should only accept own style and alias properties', () => {
+      expect(isStyleName('red')).toBe(true)
+      expect(isStyleName('gray')).toBe(true)
+      expect(isStyleName('toString')).toBe(false)
+      expect(isStyleName('__proto__')).toBe(false)
+      expect(getStyle('toString')).toBeUndefined()
+      expect(getStyle('__proto__')).toBeUndefined()
     })
   })
 

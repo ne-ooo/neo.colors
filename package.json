@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Zero-dependency terminal colors - Fast, modern, tree-shakeable alternative to chalk",
   "type": "module",
+  "sideEffects": false,
   "author": "neo",
   "license": "MIT",
   "keywords": [
@@ -31,6 +32,7 @@
   "engines": {
     "node": ">=18.0.0"
   },
+  "packageManager": "pnpm@11.3.0",
   "exports": {
     ".": {
       "import": {
@@ -38,7 +40,7 @@
         "default": "./dist/index.js"
       },
       "require": {
-        "types": "./dist/index.d.cts",
+        "types": "./dist/index.require.d.cts",
         "default": "./dist/index.cjs"
       }
     }
@@ -48,33 +50,50 @@
   "types": "./dist/index.d.ts",
   "files": [
     "dist/index.js",
+    "dist/index.js.map",
     "dist/index.cjs",
+    "dist/index.internal.cjs",
+    "dist/index.internal.cjs.map",
     "dist/index.d.ts",
     "dist/index.d.cts",
+    "dist/index.require.d.cts",
     ".lpm",
     "README.md",
+    "BENCHMARKS.md",
+    "CHANGELOG.md",
+    "SECURITY.md",
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && node scripts/copy-assets.mjs",
     "dev": "tsup --watch",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
+    "test:package": "node test/package-smoke.mjs",
+    "test:pack": "node test/package-contents.mjs",
+    "test:tree-shaking": "node test/tree-shaking.mjs",
+    "type-check:package": "tsc --noEmit --strict --module Node16 --moduleResolution Node16 --target ES2022 test/package-smoke.cts",
     "bench": "vitest bench",
     "type-check": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
+    "security:audit": "pnpm audit --audit-level low",
     "clean": "rm -rf dist",
-    "prepublishOnly": "pnpm clean && pnpm build && pnpm test"
+    "check": "pnpm type-check && pnpm lint && pnpm test:coverage --run && pnpm build && pnpm test:tree-shaking && pnpm type-check:package && pnpm test:package && pnpm test:pack",
+    "release:check": "pnpm clean && pnpm check && pnpm security:audit",
+    "prepublishOnly": "pnpm release:check"
   },
   "devDependencies": {
-    "@types/node": "^18.19.0",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0",
-    "eslint": "^8.56.0",
-    "tsup": "^8.0.1",
-    "typescript": "^5.3.3",
-    "vitest": "^1.2.0",
+    "@types/node": "^18.19.130",
+    "@typescript-eslint/eslint-plugin": "8.65.0",
+    "@typescript-eslint/parser": "8.65.0",
+    "@vitest/coverage-v8": "^3.2.6",
+    "eslint": "^9.39.5",
+    "esbuild": "0.28.1",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.3",
+    "vitest": "^3.2.6",
     "chalk": "^4.1.2"
   },
   "homepage": "https://github.com/ne-ooo/neo.colors#readme"

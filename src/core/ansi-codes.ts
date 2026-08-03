@@ -62,10 +62,10 @@ export const styles = {
 
 // Aliases
 export const aliases = {
-  gray: styles.blackBright,
-  grey: styles.blackBright,
-  bgGray: styles.bgBlackBright,
-  bgGrey: styles.bgBlackBright,
+  gray: { open: '\u001B[90m', close: '\u001B[39m' },
+  grey: { open: '\u001B[90m', close: '\u001B[39m' },
+  bgGray: { open: '\u001B[100m', close: '\u001B[49m' },
+  bgGrey: { open: '\u001B[100m', close: '\u001B[49m' },
 } as const
 
 /**
@@ -93,23 +93,24 @@ export function rgb(r: number, g: number, b: number, background = false): AnsiCo
 /**
  * Get all style names
  */
-export const styleNames = Object.keys(styles) as Array<keyof typeof styles>
+export const styleNames = /* @__PURE__ */ Object.keys(styles) as Array<keyof typeof styles>
+export type StyleName = keyof typeof styles | keyof typeof aliases
 
 /**
  * Check if a style name exists
  */
-export function isStyleName(name: string): name is keyof typeof styles {
-  return name in styles || name in aliases
+export function isStyleName(name: string): name is StyleName {
+  return Object.hasOwn(styles, name) || Object.hasOwn(aliases, name)
 }
 
 /**
  * Get style by name (including aliases)
  */
 export function getStyle(name: string): AnsiCode | undefined {
-  if (name in aliases) {
+  if (Object.hasOwn(aliases, name)) {
     return aliases[name as keyof typeof aliases]
   }
-  if (name in styles) {
+  if (Object.hasOwn(styles, name)) {
     return styles[name as keyof typeof styles]
   }
   return undefined

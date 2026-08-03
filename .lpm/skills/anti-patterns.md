@@ -9,6 +9,25 @@ globs:
 
 # Anti-Patterns for @lpm.dev/neo.colors
 
+### [CRITICAL] Writing unsanitized user input to a terminal
+
+Wrong:
+
+```typescript
+console.log(colors.red(userProvidedText))
+```
+
+Correct:
+
+```typescript
+import colors, { sanitizeText } from '@lpm.dev/neo.colors'
+
+console.log(colors.red(sanitizeText(userProvidedText)))
+```
+
+Styling preserves nested ANSI by design. Use `sanitizeText()` at the trust
+boundary to remove terminal commands while preserving normal log whitespace.
+
 ### [CRITICAL] Passing unvalidated hex values — silent unstyled output
 
 Wrong:

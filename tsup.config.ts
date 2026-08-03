@@ -13,7 +13,7 @@ export default defineConfig({
   outDir: 'dist',
   outExtension({ format }) {
     return {
-      js: format === 'cjs' ? '.cjs' : '.js',
+      js: format === 'cjs' ? '.internal.cjs' : '.js',
       dts: format === 'cjs' ? '.d.cts' : '.d.ts'
     }
   }

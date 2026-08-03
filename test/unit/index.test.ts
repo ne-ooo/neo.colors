@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
+import * as colorExports from '../../src/index.js'
 import colors, {
   createColors,
   detectColorSupport,
@@ -55,6 +56,39 @@ describe('Main API', () => {
       const support = detectColorSupport()
       expect(support).toBeDefined()
       expect(support.level).toBeDefined()
+    })
+
+    it('should execute every named static style export', () => {
+      const styleNames = [
+        'reset', 'bold', 'dim', 'italic', 'underline', 'inverse', 'hidden', 'strikethrough',
+        'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'gray', 'grey',
+        'blackBright', 'redBright', 'greenBright', 'yellowBright', 'blueBright',
+        'magentaBright', 'cyanBright', 'whiteBright',
+        'bgBlack', 'bgRed', 'bgGreen', 'bgYellow', 'bgBlue', 'bgMagenta', 'bgCyan', 'bgWhite',
+        'bgGray', 'bgGrey', 'bgBlackBright', 'bgRedBright', 'bgGreenBright', 'bgYellowBright',
+        'bgBlueBright', 'bgMagentaBright', 'bgCyanBright', 'bgWhiteBright',
+      ] as const
+
+      for (const name of styleNames) {
+        expect(colorExports[name]('text')).toEqual(expect.any(String))
+      }
+    })
+
+    it('should execute every named dynamic style export', () => {
+      expect(colorExports.rgb(255, 0, 0)('text')).toEqual(expect.any(String))
+      expect(colorExports.hex('#ff0000')('text')).toEqual(expect.any(String))
+      expect(colorExports.ansi256(196)('text')).toEqual(expect.any(String))
+      expect(colorExports.bgRgb(255, 0, 0)('text')).toEqual(expect.any(String))
+      expect(colorExports.bgHex('#ff0000')('text')).toEqual(expect.any(String))
+      expect(colorExports.bgAnsi256(196)('text')).toEqual(expect.any(String))
+    })
+
+    it('should support multiple arguments through named styles', () => {
+      expect(colorExports.red('message', 42, true)).toEqual(expect.stringContaining('message 42 true'))
+    })
+
+    it('should export the terminal sanitizer', () => {
+      expect(colorExports.sanitizeText('\u001B[31munsafe')).toBe('unsafe')
     })
   })
 
