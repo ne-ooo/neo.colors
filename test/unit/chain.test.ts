@@ -55,6 +55,34 @@ describe('Chainable API', () => {
       expect(result2).toContain('\u001B[31m')
       expect(result2).toContain('\u001B[1m')
     })
+
+    it('should preserve an outer color around nested colored text', () => {
+      const colors = createColors({ level: 3 })
+      const result = colors.red(`A${colors.blue('B')}C`)
+
+      expect(result).toBe(
+        '\u001B[31mA\u001B[34mB\u001B[39m\u001B[31mC\u001B[39m'
+      )
+    })
+
+    it('should preserve an outer background around nested background text', () => {
+      const colors = createColors({ level: 3 })
+      const result = colors.bgRed(`A${colors.bgBlue('B')}C`)
+
+      expect(result).toBe(
+        '\u001B[41mA\u001B[44mB\u001B[49m\u001B[41mC\u001B[49m'
+      )
+    })
+
+    it('should cache static and dynamic style branches', () => {
+      const colors = createColors({ level: 3 })
+
+      expect(colors.red).toBe(colors.red)
+      expect(colors.red.bold).toBe(colors.red.bold)
+      expect(colors.gray).toBe(colors.blackBright)
+      expect(colors.rgb(255, 0, 0)).toBe(colors.rgb(255, 0, 0))
+      expect(colors.hex('#ff0000')).toBe(colors.rgb(255, 0, 0))
+    })
   })
 
   describe('Dynamic colors', () => {
@@ -125,6 +153,13 @@ describe('Chainable API', () => {
       expect(result).toContain('\u001B[31m')
     })
 
+    it('should downgrade secondary RGB colors correctly at level 1', () => {
+      const colors = createColors({ level: 1 })
+
+      expect(colors.rgb(255, 255, 0)('yellow')).toContain('\u001B[93m')
+      expect(colors.rgb(0, 255, 255)('cyan')).toContain('\u001B[96m')
+    })
+
     it('should downgrade rgb to ansi256 at level 2', () => {
       const colors = createColors({ level: 2 })
       const result = colors.rgb(255, 0, 0)('text')
@@ -151,13 +186,30 @@ describe('Chainable API', () => {
       expect(result).toContain('123')
     })
 
+    it('should join multiple arguments with spaces', () => {
+      const colors = createColors({ level: 3 })
+
+      expect(colors.red('message', 42, true)).toBe(
+        '\u001B[31mmessage 42 true\u001B[39m'
+      )
+      expect(colors.red()).toBe('')
+    })
+
     it('should handle newlines', () => {
       const colors = createColors({ level: 3 })
       const result = colors.red('line1\nline2')
-      expect(result).toContain('line1')
-      expect(result).toContain('line2')
-      // Should close and reopen colors around newline
-      expect(result).toContain('\n')
+      expect(result).toBe(
+        '\u001B[31mline1\u001B[39m\n\u001B[31mline2\u001B[39m'
+      )
+    })
+
+    it('should preserve CRLF line endings while closing and reopening styles', () => {
+      const colors = createColors({ level: 3 })
+      const result = colors.red('line1\r\nline2')
+
+      expect(result).toBe(
+        '\u001B[31mline1\u001B[39m\r\n\u001B[31mline2\u001B[39m'
+      )
     })
 
     it('should handle invalid hex gracefully', () => {
@@ -176,6 +228,15 @@ describe('Chainable API', () => {
       const colors = createColors({ level: 3 })
       const result = colors.rgb(300, -10, 128)('text')
       expect(result).toContain('\u001B[38;2;255;0;128m')
+    })
+
+    it('should never emit non-finite RGB components', () => {
+      const colors = createColors({ level: 3 })
+      const result = colors.rgb(NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY)('text')
+
+      expect(result).toContain('\u001B[38;2;0;255;0m')
+      expect(result).not.toContain('NaN')
+      expect(result).not.toContain('Infinity')
     })
   })
 
@@ -198,6 +259,39 @@ describe('Chainable API', () => {
       const colors = createColors({ enabled: false })
       const result = colors.red.bold('text')
       expect(result).toBe('text')
+    })
+  })
+
+  describe('mutable level', () => {
+    it('should update every cached branch when the level changes', () => {
+      const colors = createColors({ level: 3 })
+      const red = colors.red
+
+      colors.level = 0
+      expect(colors.red('root')).toBe('root')
+      expect(red('cached')).toBe('cached')
+      expect(red.level).toBe(0)
+
+      red.level = 3
+      expect(colors.red('enabled')).toContain('\u001B[31m')
+      expect(colors.level).toBe(3)
+    })
+
+    it('should allow an initially disabled instance to be enabled', () => {
+      const colors = createColors({ enabled: false })
+      const red = colors.red
+
+      colors.level = 1
+      expect(red('enabled')).toBe('\u001B[31menabled\u001B[39m')
+    })
+
+    it('should reject invalid color levels at runtime', () => {
+      expect(() => createColors({ level: 4 as never })).toThrow(RangeError)
+
+      const colors = createColors({ level: 1 })
+      expect(() => {
+        colors.level = -1 as never
+      }).toThrow(RangeError)
     })
   })
 })

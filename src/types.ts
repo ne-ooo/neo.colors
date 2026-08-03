@@ -41,7 +41,7 @@ export interface ColorOptions {
  * Style function that can be chained
  */
 export interface StyleFunction {
-  (text: string | number): string
+  (...values: unknown[]): string
 
   // Modifiers
   readonly reset: StyleFunction

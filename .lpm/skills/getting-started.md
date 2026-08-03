@@ -22,6 +22,7 @@ colors.red('Error!')
 colors.red.bold('Critical!')
 colors.hex('#ff6600').underline('Warning')
 colors.rgb(255, 128, 0).bold('Custom color')
+colors.cyan('port', 3000, 'ready')  // Multiple values join with spaces
 ```
 
 Use this when you need chaining or dynamic colors.
@@ -156,6 +157,14 @@ const plain = createColors({ enabled: false })
 plain.red.bold('text')  // → 'text'
 ```
 
+The level is mutable and shared by existing cached branches:
+
+```typescript
+const error = colors.red.bold
+colors.level = 0
+error('plain')  // → 'plain'
+```
+
 ### Stderr-specific instance
 
 ```typescript
@@ -175,7 +184,18 @@ const support = getStdoutColorSupport()
 // { level: 3, hasBasic: true, has256: true, has16m: true }
 ```
 
-Detection checks (in priority order): `--color`/`--no-color` CLI flags, `FORCE_COLOR` env, `NO_COLOR` env, `TERM`, `COLORTERM`, `TERM_PROGRAM`, platform detection, TTY check.
+Detection checks (in priority order): `--color`/`--no-color` CLI flags, `FORCE_COLOR` env, `NO_COLOR`/`TERM=dumb` opt-outs, the target stream's TTY state, then platform, CI, `TERM_PROGRAM`, `TERM`, and `COLORTERM` capabilities.
+
+## Untrusted Text
+
+Color functions preserve nested ANSI sequences. Sanitize values from users,
+remote services, or databases at the trust boundary:
+
+```typescript
+import colors, { sanitizeText } from '@lpm.dev/neo.colors'
+
+console.log(colors.red(sanitizeText(untrustedText)))
+```
 
 ## Multiline Strings
 

@@ -6,15 +6,15 @@
 ## Features
 
 - ✅ **Zero dependencies** - No `node_modules` bloat
-- ✅ **5-10% faster** than chalk
-- ✅ **33% smaller** gzipped bundle
-- ✅ **100% chalk-compatible API** - Drop-in replacement
+- ✅ **Competitive performance** - Cached chains benchmark in the same class as chalk
+- ✅ **Small named bundles** - A single named color is ~1.1 KB gzipped
+- ✅ **Chalk-compatible calls** - Chaining, nesting, and multiple arguments
 - ✅ **Full TypeScript support** - Strict mode, zero `any` types
 - ✅ **ESM + CommonJS** - Works everywhere
 - ✅ **Tree-shakeable** - Import only what you need
 - ✅ **Auto color detection** - Respects NO_COLOR, FORCE_COLOR, CI environments
 - ✅ **16m colors** - RGB, hex, 256-color palette
-- ✅ **100% test coverage** - Battle-tested
+- ✅ **Coverage-gated tests** - Source coverage thresholds enforced before publish
 
 ## Quick Start
 
@@ -28,6 +28,14 @@ import colors from '@lpm.dev/neo.colors'
 console.log(colors.red('Error!'))
 console.log(colors.green.bold('Success!'))
 console.log(colors.blue.underline('https://example.com'))
+```
+
+Native CommonJS receives the same chainable callable:
+
+```javascript
+const colors = require('@lpm.dev/neo.colors')
+
+console.log(colors.red.bold('Error!'))
 ```
 
 ## Why @lpm.dev/neo.colors?
@@ -105,6 +113,9 @@ colors.red.bold('Error!')
 colors.green.bold.underline('Success!')
 colors.blue.bgWhite.bold('Info')
 
+// Multiple values are joined with spaces, like Chalk
+colors.cyan('port', 3000, 'ready')
+
 // Order doesn't matter - they all stack
 colors.bold.red('text')  // same as
 colors.red.bold('text')
@@ -157,6 +168,11 @@ const colors = createColors({ level: 3 }) // 0=none, 1=16, 2=256, 3=16m
 // Disable colors
 const noColors = createColors({ enabled: false })
 const text = noColors.red('text') // → 'text' (no colors)
+
+// Levels are mutable and shared by every cached branch
+const error = colors.red.bold
+colors.level = 0
+error('plain text') // → 'plain text'
 ```
 
 ### TypeScript
@@ -197,6 +213,23 @@ node app.js --color=256    # Force 256-color mode
 node app.js --color=16m    # Force truecolor mode
 ```
 
+## Untrusted Terminal Output
+
+Styling functions preserve existing ANSI sequences so nested colors continue
+to work. Sanitize user-controlled values explicitly before writing them to a
+terminal:
+
+```typescript
+import colors, { sanitizeText } from '@lpm.dev/neo.colors'
+
+const safeName = sanitizeText(untrustedName)
+console.log(colors.green('User:', safeName))
+```
+
+`sanitizeText()` removes CSI styling, OSC hyperlinks/title/clipboard commands,
+other terminal control strings, and unsafe C0/C1 controls. Newlines, carriage
+returns, and tabs are preserved.
+
 ## Color Detection
 
 @lpm.dev/neo.colors automatically detects terminal capabilities:
@@ -204,10 +237,10 @@ node app.js --color=16m    # Force truecolor mode
 1. **CLI flags** (`--color`, `--no-color`) - highest priority
 2. **FORCE_COLOR** environment variable
 3. **NO_COLOR** environment variable
-4. **CI environments** (GitHub Actions, Travis, Jenkins, etc.)
-5. **Terminal capabilities** (COLORTERM, TERM, TERM_PROGRAM)
-6. **Platform detection** (Windows 10+, macOS, Linux)
-7. **TTY check** - fallback
+4. **TERM=dumb** explicit opt-out
+5. **Target stream TTY check** - piped output stays plain
+6. **Platform and CI detection**
+7. **Terminal capabilities** (COLORTERM, TERM, TERM_PROGRAM)
 
 ```typescript
 import { detectColorSupport } from '@lpm.dev/neo.colors'
@@ -224,7 +257,7 @@ console.log(support)
 
 ## Migration from Chalk
 
-@lpm.dev/neo.colors is a **drop-in replacement** for chalk:
+@lpm.dev/neo.colors is a drop-in replacement for Chalk's standard function-call API:
 
 ```diff
 - import chalk from 'chalk'
@@ -240,7 +273,7 @@ console.log(support)
 - Template literals are not supported (use string concatenation instead)
 - Some rarely-used features may differ slightly
 
-For most use cases, it's a perfect drop-in replacement!
+For normal function-call usage, migration is usually an import-only change.
 
 ## Examples
 
@@ -291,13 +324,18 @@ console.log(colors.dim('  Unchanged line'))
 See [BENCHMARKS.md](./BENCHMARKS.md) for detailed performance comparison.
 
 **Summary**:
-- ✅ 5-10% faster than chalk
-- ✅ 33% smaller gzipped
-- ✅ 60% less code
+- ✅ Cached hot paths perform in the same class as chalk
+- ✅ Named imports eliminate the chainable API and unrelated styles
 
 ## Browser Support
 
 @lpm.dev/neo.colors is designed for **Node.js environments** (CLI tools, build scripts, servers). For browser-based coloring, consider CSS.
+
+## Security
+
+For vulnerability reporting and supported-version information, see
+[SECURITY.md](./SECURITY.md). Please do not disclose suspected vulnerabilities
+in a public issue before they have been investigated.
 
 ## License
 

@@ -4,7 +4,12 @@
 
 import { describe, bench } from 'vitest'
 import chalk from 'chalk'
-import colors from '../../src/index.js'
+import { createColors } from '../../src/index.js'
+
+// Compare equivalent, deterministic truecolor instances. Auto-detected
+// defaults would benchmark disabled output when the runner is not a TTY.
+const colors = createColors({ level: 3 })
+const enabledChalk = new chalk.Instance({ level: 3 })
 
 describe('Basic Colors', () => {
   const text = 'Hello World'
@@ -14,7 +19,7 @@ describe('Basic Colors', () => {
   })
 
   bench('chalk - red', () => {
-    chalk.red(text)
+    enabledChalk.red(text)
   })
 
   bench('@lpm.dev/neo.colors - green', () => {
@@ -22,7 +27,7 @@ describe('Basic Colors', () => {
   })
 
   bench('chalk - green', () => {
-    chalk.green(text)
+    enabledChalk.green(text)
   })
 
   bench('@lpm.dev/neo.colors - blue', () => {
@@ -30,7 +35,7 @@ describe('Basic Colors', () => {
   })
 
   bench('chalk - blue', () => {
-    chalk.blue(text)
+    enabledChalk.blue(text)
   })
 })
 
@@ -42,7 +47,7 @@ describe('Chained Styles', () => {
   })
 
   bench('chalk - red.bold', () => {
-    chalk.red.bold(text)
+    enabledChalk.red.bold(text)
   })
 
   bench('@lpm.dev/neo.colors - red.bold.underline', () => {
@@ -50,7 +55,7 @@ describe('Chained Styles', () => {
   })
 
   bench('chalk - red.bold.underline', () => {
-    chalk.red.bold.underline(text)
+    enabledChalk.red.bold.underline(text)
   })
 
   bench('@lpm.dev/neo.colors - bgRed.white.bold', () => {
@@ -58,7 +63,7 @@ describe('Chained Styles', () => {
   })
 
   bench('chalk - bgRed.white.bold', () => {
-    chalk.bgRed.white.bold(text)
+    enabledChalk.bgRed.white.bold(text)
   })
 })
 
@@ -70,7 +75,7 @@ describe('RGB Colors', () => {
   })
 
   bench('chalk - rgb(255, 0, 0)', () => {
-    chalk.rgb(255, 0, 0)(text)
+    enabledChalk.rgb(255, 0, 0)(text)
   })
 
   bench('@lpm.dev/neo.colors - hex(#ff0000)', () => {
@@ -78,7 +83,7 @@ describe('RGB Colors', () => {
   })
 
   bench('chalk - hex(#ff0000)', () => {
-    chalk.hex('#ff0000')(text)
+    enabledChalk.hex('#ff0000')(text)
   })
 })
 
@@ -89,7 +94,7 @@ describe('Real-world Scenarios', () => {
   })
 
   bench('chalk - error message', () => {
-    const msg = chalk.red.bold('Error:') + ' ' + chalk.red('Something went wrong')
+    const msg = enabledChalk.red.bold('Error:') + ' ' + enabledChalk.red('Something went wrong')
     return msg
   })
 
@@ -99,7 +104,7 @@ describe('Real-world Scenarios', () => {
   })
 
   bench('chalk - success message', () => {
-    const msg = chalk.green('✓') + ' ' + chalk.green.bold('Build successful!')
+    const msg = enabledChalk.green('✓') + ' ' + enabledChalk.green.bold('Build successful!')
     return msg
   })
 
@@ -115,10 +120,10 @@ describe('Real-world Scenarios', () => {
 
   bench('chalk - colorful log', () => {
     const msg = [
-      chalk.cyan('[INFO]'),
-      chalk.yellow(new Date().toISOString()),
-      chalk.white('Server started on'),
-      chalk.blue.underline('http://localhost:3000'),
+      enabledChalk.cyan('[INFO]'),
+      enabledChalk.yellow(new Date().toISOString()),
+      enabledChalk.white('Server started on'),
+      enabledChalk.blue.underline('http://localhost:3000'),
     ].join(' ')
     return msg
   })
@@ -128,7 +133,6 @@ describe('Disabled Colors (level 0)', () => {
   const text = 'Hello World'
 
   // Create instances with colors disabled
-  import { createColors } from '../../src/index.js'
   const disabledColors = createColors({ level: 0 })
   const disabledChalk = new chalk.Instance({ level: 0 })
 
